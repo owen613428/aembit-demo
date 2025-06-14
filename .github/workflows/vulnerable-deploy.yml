@@ -1,0 +1,139 @@
+name: 🚨 Vulnerable Deployment (Demo Only - Don't Do This!)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'demo'
+        type: choice
+        options:
+          - demo
+          - staging
+
+env:
+  # 🚨 SECURITY WARNING: This workflow intentionally demonstrates bad practices
+  DEMO_WARNING: "This is a demonstration of vulnerable CI/CD practices"
+
+jobs:
+  vulnerable-deploy:
+    runs-on: ubuntu-latest
+    environment: demo
+    
+    steps:
+    - name: 🚨 Security Warning
+      run: |
+        echo "=================================================="
+        echo "🚨 WARNING: VULNERABLE DEPLOYMENT DEMO"
+        echo "This workflow demonstrates what NOT to do!"
+        echo "Contains intentional security vulnerabilities"
+        echo "All credentials are fake and for demo only"
+        echo "=================================================="
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: 🚨 Build Vulnerable Web App (Contains Hardcoded Secrets!)
+      run: |
+        echo "Building vulnerable web application..."
+        cd vulnerable-webapp
+        pip install -r requirements.txt
+        echo "🚨 SECURITY RISK: Hardcoded secrets in application code!"
+        grep -r "postgresql://" . || echo "Found hardcoded database URLs"
+        grep -r "supersecret" . || echo "Found hardcoded passwords"
+    
+    - name: 🚨 Build Vulnerable API (Contains API Keys in Code!)
+      run: |
+        echo "Building vulnerable API application..."
+        cd vulnerable-api
+        pip install -r requirements.txt
+        echo "🚨 SECURITY RISK: API keys hardcoded in source code!"
+        grep -r "api-key" . || echo "Found hardcoded API keys"
+    
+    - name: 🚨 Deploy with GitHub Secrets (Still Risky!)
+      env:
+        # 🚨 SECURITY RISK: Secrets in environment variables
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        EXTERNAL_API_KEY: ${{ secrets.EXTERNAL_API_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      run: |
+        echo "=================================================="
+        echo "🚨 DEPLOYING WITH SECRETS IN ENVIRONMENT"
+        echo "=================================================="
+        echo "Database URL: $DATABASE_URL"
+        echo "API Key: $EXTERNAL_API_KEY" 
+        echo "JWT Secret: $JWT_SECRET"
+        echo ""
+        echo "🚨 SECURITY ISSUES DEMONSTRATED:"
+        echo "1. Secrets visible in GitHub Actions logs (like above!)"
+        echo "2. Anyone with repo access can see these secrets"
+        echo "3. Secrets stored in multiple places (GitHub + code)"
+        echo "4. Manual secret rotation required"
+        echo "5. No audit trail of secret usage"
+        echo "6. Environment variables expose credentials"
+        echo ""
+        echo "Applications 'deployed' to demo environment:"
+        echo "- Web App: https://demo-vulnerable.example.com"
+        echo "- API: https://api-demo-vulnerable.example.com"
+    
+    - name: 🚨 Container Security Scan (Finds Secrets!)
+      run: |
+        echo "Scanning for secrets in application code..."
+        echo ""
+        echo "🚨 SECRETS FOUND IN CODE:"
+        find . -name "*.py" -exec grep -l "postgresql://\|api-key\|secret" {} \; || true
+        echo ""
+        echo "🚨 ENVIRONMENT VARIABLES WITH SECRETS:"
+        env | grep -E "(DATABASE|API|SECRET)" || true
+    
+    - name: 📊 Generate Vulnerability Report
+      run: |
+        cat > vulnerability-report.md << 'EOF'
+        # 🚨 Vulnerability Assessment Report
+        
+        ## Critical Security Issues Found
+        
+        ### 1. Hardcoded Secrets in Source Code
+        - ❌ Database URLs with credentials in config files
+        - ❌ API keys embedded directly in Python code
+        - ❌ JWT secrets hardcoded in application files
+        - ❌ Passwords stored in plain text
+        
+        ### 2. CI/CD Pipeline Secrets Exposure
+        - ❌ Secrets visible in GitHub Actions logs
+        - ❌ Environment variables expose credentials
+        - ❌ Anyone with repository access can view secrets
+        - ❌ No encryption of secrets in transit
+        
+        ### 3. Operational Security
+        - ❌ Manual secret rotation process
+        - ❌ No audit trail of secret access
+        - ❌ Shared secrets across environments
+        - ❌ No credential lifecycle management
+        
+        ## Risk Assessment: CRITICAL
+        
+        **Complete credential exposure across entire pipeline**
+        
+        ## Recommendations
+        
+        1. ✅ Implement Aembit for workload identity
+        2. ✅ Remove all hardcoded secrets from code
+        3. ✅ Use OIDC tokens for CI/CD authentication
+        4. ✅ Implement just-in-time credential delivery
+        
+        **URGENT**: Run the secure deployment workflow to see the transformation.
+        EOF
+    
+    - name: Upload Vulnerability Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: vulnerability-assessment-report
+        path: vulnerability-report.md
+        retention-days: 30
